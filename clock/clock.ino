@@ -12,7 +12,7 @@
 #include "udp.h"
 #include "display.h"
 
-#define DEBUG true
+#define DEBUG false
 
 const char* ssid = "";  //  your network SSID (name)
 const char* pass = "";       // your network password
@@ -21,6 +21,10 @@ const char* pass = "";       // your network password
 const unsigned long seventyYears = 2208988800UL; //NTP_TIMESTAMP_DIFF     
 const int beginDSTMonth = 3;
 const int endDSTMonth = 10;
+
+const unsigned long NTP_WAIT = 0;
+const unsigned long NTP_WIFI_TIMEOUT = 1;
+const unsigned long NTP_RESP_TIMEOUT = 2;
 
 union epoch_union {
 time_t tm;
@@ -67,7 +71,7 @@ void setup()
   
   WiFi.begin(ssid, pass);
   
-  while (WiFi.status() != WL_CONNECTED) {
+  while (!WiFi.isConnected()) {
     spin();
     delay(200);
   }
@@ -95,18 +99,23 @@ void setup()
 
 unsigned long callNTP() 
 {
-  const uint8_t max_retry = 5;
+  const uint8_t max_retry = 15;
   enum State {none, wait_packet};
   static State state = none;
   static uint8_t wifi_retry_counter = 0;
   static uint8_t ntp_retry_counter = 0;
-  
+
+  Serial.print("wifi status: ");
+  Serial.println(WiFi.isConnected() ? "connected" : "disconnected");
   if (!WiFi.isConnected()) 
   {
+    Serial.print("wifi retry: ");
+    Serial.println(wifi_retry_counter);
+
     WiFi.begin(ssid, pass);
     wifi_retry_counter++;
     
-    return wifi_retry_counter > max_retry ? 1 : 0;
+    return wifi_retry_counter > max_retry ? NTP_WIFI_TIMEOUT : NTP_WAIT;
   }
 
   wifi_retry_counter = 0;
@@ -117,7 +126,7 @@ unsigned long callNTP()
     sendNTPpacket();
     state = wait_packet;
     ntp_retry_counter = 0;
-    return 0;
+    return NTP_WAIT;
   }
 
   if (state == wait_packet)
@@ -130,10 +139,10 @@ unsigned long callNTP()
       if (ntp_retry_counter > max_retry)
       {
         state = none;
-        return 2;
+        return NTP_RESP_TIMEOUT;
       }
       
-      return 0;
+      return NTP_WAIT;
     }
   }
 
@@ -142,15 +151,25 @@ unsigned long callNTP()
   return udp_read_time();
 }
 
+void dump_time(struct tm *tm)
+{
+  #if DEBUG
+  Serial.print(tm->tm_hour);
+  Serial.print(":");
+  Serial.print(tm->tm_min);
+  Serial.print(":");
+  Serial.println(tm->tm_sec);
+  #endif
+}
 void loop()
 {
   static bool err = false;
   static bool ntp_in_progress = false;
   static bool on_off = false;
-  static uint8_t current_hour = 0;
+  
   unsigned long local_time = millis();
   
-
+  /*
   if (err && local_time % 500 == 0)
   {
     if (on_off) 
@@ -163,7 +182,7 @@ void loop()
     }
 
     on_off = !on_off;
-  }
+  }*/
   
   if (local_time % 2000 == 0)  // every 2 seconds
   {
@@ -179,12 +198,13 @@ void loop()
     tx_time.n += offset;
     tm = gmtime(&tx_time.tm);
 
-    current_hour = tm->tm_hour;
-    render_time(current_hour, tm->tm_min, tm->tm_sec);
-    display_time(current_hour);
+    
+    render_time(tm->tm_hour, tm->tm_min, tm->tm_sec);
+    display_time(tm->tm_hour);
+    dump_time(tm);
   }
 
-  if (local_time < time_start || local_time % (1000 * 60/* * 60 * 24*/) == 0)
+  if (local_time < time_start || local_time % (1000 * 60 * 60 * 12) == 0)
   {
     callNTP();
     ntp_in_progress = true;
@@ -196,10 +216,10 @@ void loop()
   if (ntp_in_progress && local_time % 500)
   {
     unsigned long ntp = callNTP();
-    if (ntp == 2 || ntp == 1)
+    if (ntp == NTP_WIFI_TIMEOUT || ntp == NTP_RESP_TIMEOUT)
     {
       err = true;
-      Serial.print("ntp err");
+      Serial.print("ntp err: ");
       Serial.println(err);
     }
     else if (ntp > seventyYears) 
@@ -208,7 +228,7 @@ void loop()
       time_start = millis() / 1000;
       ntp_in_progress = false;
       err = false;
-      Serial.print("ntp update");
+      Serial.println("ntp update");
     }
   }
 }

@@ -214,7 +214,7 @@ void loop()
     unsigned long ntp = callNTP();
     if (ntp == NTP_WIFI_TIMEOUT || ntp == NTP_RESP_TIMEOUT)
     {
-      err = true;
+      //err = true;
       #if DEBUG
         Serial.print("ntp err: ");
         Serial.println(err);
@@ -225,7 +225,7 @@ void loop()
       ntp_epoch.n = ntp - NTP_TIMESTAMP_DIFF;
       time_start = millis() / 1000;
       ntp_in_progress = false;
-      err = false;
+      //err = false;
       #if DEBUG
         Serial.println("ntp updated");
       #endif

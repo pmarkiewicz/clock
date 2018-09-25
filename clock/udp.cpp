@@ -4,13 +4,15 @@
 
 #include "udp.h"
 
+#define DEBUG false
+
 const unsigned int localPort = 2390;      // local port to listen for UDP packets
 IPAddress timeServerIP; // time.nist.gov NTP server address
 const char* ntpServerName = "pool.ntp.org";
 
 const int NTP_PACKET_SIZE = 48; // NTP time stamp is in the first 48 bytes of the message
 
-uint8_t packetBuffer[ NTP_PACKET_SIZE]; //buffer to hold incoming and outgoing packets
+uint8_t packetBuffer[NTP_PACKET_SIZE]; //buffer to hold incoming and outgoing packets
 
 // A UDP instance to let us send and receive packets over UDP
 WiFiUDP udp;
@@ -48,7 +50,11 @@ unsigned long udp_read_time()
 void sendNTPpacket()
 {
   WiFi.hostByName(ntpServerName, timeServerIP);
-  Serial.println("sending NTP packet...");
+  
+  #if DEBUG
+    Serial.println("sending NTP packet...");
+  #endif
+
   // set all bytes in the buffer to 0
   memset(packetBuffer, 0, NTP_PACKET_SIZE);
   // Initialize values needed to form NTP request

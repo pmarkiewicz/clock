@@ -12,9 +12,6 @@ const uint8_t PixelPin = 14; // ignored
 const uint8_t pixMap[] = {6, 7, 8, 9, 10, 11, 0, 1, 2, 3, 4, 5};
 const uint8_t brightness[] = {25, 20, 20, 20, 20, 50, 60, 70, 80, 90, 200, 200, 200, 200, 200, 200, 180, 150, 140, 130, 100, 100, 80, 50, 0};
 
-const uint8_t MinBrightness = 8;
-const uint8_t MaxBrightness = 250;
-
 const uint8_t colorSaturation = 255; // saturation of color constants
 const RgbColor hh_color(colorSaturation, 0, 0);
 const RgbColor mm_color(0, colorSaturation, 0);
@@ -65,7 +62,7 @@ void render_time(int h, int m, int s)
     display[i] = &black;
   }
 
-  for (uint8_t i = 0; i < 4; i++)
+  for (uint8_t i = 0; i < sizeof(static_pts); i++)
   {
     uint8_t pt = static_pts[i];
     px = pixMap[pt];

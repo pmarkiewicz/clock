@@ -10,14 +10,19 @@ const uint16_t PixelCount = 12;
 const uint8_t PixelPin = 14; // ignored
 
 const uint8_t pixMap[] = {6, 7, 8, 9, 10, 11, 0, 1, 2, 3, 4, 5};
+<<<<<<< HEAD
 const uint8_t brightness[] = {25, 20, 20, 20, 20, 50, 60, 70, 80, 90, 200, 200, 200, 200, 200, 200, 180, 150, 140, 130, 100, 100, 80, 50, 0};
+=======
+const uint8_t brightness[] = {25, 20, 20, 20, 20, 50, 60, 70, 80, 90, 200, 200, 200, 200, 200, 200, 180, 150, 140, 130, 100, 100, 80, 40, 0};
+const uint8_t static_pts[] = {3, 6, 9, 0};
+>>>>>>> 4906d9edcb78423c6ad69ee6b236c1a8f68951bf
 
 const uint8_t colorSaturation = 255; // saturation of color constants
 const RgbColor hh_color(colorSaturation, 0, 0);
 const RgbColor mm_color(0, colorSaturation, 0);
 const RgbColor hh_mm_color(colorSaturation, colorSaturation, 0);
 const RgbColor ss_color(0, 0, colorSaturation / 2);
-const RgbColor static_color(0, 3, 3);
+const RgbColor static_color(8, 0, 8);
 
 const RgbColor black(0, 0, 0);
 const RgbColor spin_color(0, 105, 85);
@@ -50,7 +55,7 @@ void spin()
 
 void render_time(int h, int m, int s)
 {
-  const uint8_t static_pts[] = {3, 6, 9, 12};
+  
   uint8_t px;
 
   h %= 12;
